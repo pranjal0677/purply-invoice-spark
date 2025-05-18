@@ -1,6 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { 
   DollarSign, 
   FileText, 
@@ -86,9 +87,11 @@ const Dashboard = () => {
       <section className="mb-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold">Recent Invoices</h2>
-          <Button variant="ghost" className="text-primary flex items-center gap-1">
-            View all <ArrowRight size={16} />
-          </Button>
+          <Link to="/invoices">
+            <Button variant="ghost" className="text-primary flex items-center gap-1">
+              View all <ArrowRight size={16} />
+            </Button>
+          </Link>
         </div>
         
         <div className="overflow-auto">
@@ -127,22 +130,30 @@ const Dashboard = () => {
         <div>
           <h2 className="text-2xl font-bold mb-4">Quick Actions</h2>
           <div className="grid grid-cols-2 gap-4">
-            <Button className="btn-primary h-auto py-6 flex flex-col items-center gap-2">
-              <Plus size={24} />
-              <span>New Invoice</span>
-            </Button>
-            <Button variant="outline" className="h-auto py-6 flex flex-col items-center gap-2 border-primary/20 hover:bg-primary/5">
-              <User size={24} className="text-primary" />
-              <span>Add Client</span>
-            </Button>
-            <Button variant="outline" className="h-auto py-6 flex flex-col items-center gap-2 border-primary/20 hover:bg-primary/5">
-              <FileText size={24} className="text-primary" />
-              <span>Invoice Templates</span>
-            </Button>
-            <Button variant="outline" className="h-auto py-6 flex flex-col items-center gap-2 border-primary/20 hover:bg-primary/5">
-              <Settings size={24} className="text-primary" />
-              <span>Settings</span>
-            </Button>
+            <Link to="/create-invoice">
+              <Button className="btn-primary h-auto py-6 flex flex-col items-center gap-2 w-full">
+                <Plus size={24} />
+                <span>New Invoice</span>
+              </Button>
+            </Link>
+            <Link to="/clients">
+              <Button variant="outline" className="h-auto py-6 flex flex-col items-center gap-2 border-primary/20 hover:bg-primary/5 w-full">
+                <User size={24} className="text-primary" />
+                <span>Add Client</span>
+              </Button>
+            </Link>
+            <Link to="/invoices">
+              <Button variant="outline" className="h-auto py-6 flex flex-col items-center gap-2 border-primary/20 hover:bg-primary/5 w-full">
+                <FileText size={24} className="text-primary" />
+                <span>Invoice Templates</span>
+              </Button>
+            </Link>
+            <Link to="/settings">
+              <Button variant="outline" className="h-auto py-6 flex flex-col items-center gap-2 border-primary/20 hover:bg-primary/5 w-full">
+                <Settings size={24} className="text-primary" />
+                <span>Settings</span>
+              </Button>
+            </Link>
           </div>
         </div>
 
@@ -170,9 +181,11 @@ const Dashboard = () => {
                 </li>
               ))}
             </ul>
-            <Button className="btn-secondary w-full mt-2">
-              Try It Now
-            </Button>
+            <Link to="/create-invoice">
+              <Button className="btn-secondary w-full mt-2">
+                Try It Now
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </section>

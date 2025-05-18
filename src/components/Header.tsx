@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { 
   FileText,
   Plus, 
@@ -20,10 +21,12 @@ const Header = () => {
       <div className="container mx-auto py-4 px-4 md:px-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <FileText className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              InvoiceGen
-            </h1>
+            <Link to="/" className="flex items-center gap-2">
+              <FileText className="h-8 w-8 text-primary" />
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                InvoiceGen
+              </h1>
+            </Link>
           </div>
 
           {/* Desktop Navigation */}
@@ -31,16 +34,16 @@ const Header = () => {
             <nav className="flex items-center gap-6">
               <ul className="flex items-center gap-6">
                 <li>
-                  <a href="#" className="text-foreground hover:text-primary transition-colors">Dashboard</a>
+                  <Link to="/" className="text-foreground hover:text-primary transition-colors">Dashboard</Link>
                 </li>
                 <li>
-                  <a href="#" className="text-foreground hover:text-primary transition-colors">Invoices</a>
+                  <Link to="/invoices" className="text-foreground hover:text-primary transition-colors">Invoices</Link>
                 </li>
                 <li>
-                  <a href="#" className="text-foreground hover:text-primary transition-colors">Clients</a>
+                  <Link to="/clients" className="text-foreground hover:text-primary transition-colors">Clients</Link>
                 </li>
                 <li>
-                  <a href="#" className="text-foreground hover:text-primary transition-colors">Settings</a>
+                  <Link to="/settings" className="text-foreground hover:text-primary transition-colors">Settings</Link>
                 </li>
               </ul>
               
@@ -49,10 +52,12 @@ const Header = () => {
                   <User size={16} />
                   Profile
                 </Button>
-                <Button className="btn-primary flex items-center gap-2">
-                  <Plus size={16} />
-                  New Invoice
-                </Button>
+                <Link to="/create-invoice">
+                  <Button className="btn-primary flex items-center gap-2">
+                    <Plus size={16} />
+                    New Invoice
+                  </Button>
+                </Link>
               </div>
             </nav>
           )}
@@ -74,30 +79,32 @@ const Header = () => {
           <nav className="py-4 animate-fade-in">
             <ul className="grid gap-4">
               <li>
-                <a href="#" className="flex items-center gap-2 p-2 hover:bg-muted rounded-md">
+                <Link to="/" className="flex items-center gap-2 p-2 hover:bg-muted rounded-md" onClick={() => setMobileMenuOpen(false)}>
                   Dashboard
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="flex items-center gap-2 p-2 hover:bg-muted rounded-md">
+                <Link to="/invoices" className="flex items-center gap-2 p-2 hover:bg-muted rounded-md" onClick={() => setMobileMenuOpen(false)}>
                   Invoices
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="flex items-center gap-2 p-2 hover:bg-muted rounded-md">
+                <Link to="/clients" className="flex items-center gap-2 p-2 hover:bg-muted rounded-md" onClick={() => setMobileMenuOpen(false)}>
                   Clients
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="flex items-center gap-2 p-2 hover:bg-muted rounded-md">
+                <Link to="/settings" className="flex items-center gap-2 p-2 hover:bg-muted rounded-md" onClick={() => setMobileMenuOpen(false)}>
                   Settings
-                </a>
+                </Link>
               </li>
               <li className="pt-4 border-t border-border">
-                <Button className="btn-primary w-full flex items-center justify-center gap-2">
-                  <Plus size={16} />
-                  New Invoice
-                </Button>
+                <Link to="/create-invoice" onClick={() => setMobileMenuOpen(false)}>
+                  <Button className="btn-primary w-full flex items-center justify-center gap-2">
+                    <Plus size={16} />
+                    New Invoice
+                  </Button>
+                </Link>
               </li>
             </ul>
           </nav>
