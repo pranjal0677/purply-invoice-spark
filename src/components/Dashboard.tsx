@@ -7,7 +7,8 @@ import {
   User, 
   Clock, 
   Plus, 
-  ArrowRight 
+  ArrowRight,
+  Settings 
 } from "lucide-react";
 
 const Dashboard = () => {
