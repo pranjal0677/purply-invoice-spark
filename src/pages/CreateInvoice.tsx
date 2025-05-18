@@ -1,5 +1,4 @@
-
-import { useState, useRef } from "react";
+import { useState } from "react";
 import PageLayout from "@/components/PageLayout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,8 +12,7 @@ import {
   FileText, 
   Save, 
   Download,
-  ArrowLeft,
-  FilePdf
+  ArrowLeft
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -170,7 +168,7 @@ const CreateInvoice = () => {
               Save Draft
             </Button>
             <Button className="btn-primary flex items-center gap-2 w-full sm:w-auto" onClick={handleDownloadPDF}>
-              <FilePdf size={16} />
+              <FileText size={16} />
               Download PDF
             </Button>
             <Button 
@@ -409,7 +407,7 @@ const CreateInvoice = () => {
               className="btn-primary w-full sm:w-auto" 
               onClick={handleGeneratePDF}
             >
-              <FilePdf size={16} className="mr-2" />
+              <FileText size={16} className="mr-2" />
               Preview PDF
             </Button>
           </div>

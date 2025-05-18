@@ -1,4 +1,3 @@
-
 import PageLayout from "@/components/PageLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,8 +8,7 @@ import {
   Search, 
   FileText, 
   ArrowRight,
-  ArrowLeft,
-  FilePdf
+  ArrowLeft
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -122,7 +120,7 @@ const Invoices = () => {
                           variant="outline"
                           onClick={() => handleDownloadPDF(invoice.id)}
                         >
-                          <FilePdf size={14} />
+                          <FileText size={14} />
                         </Button>
                         <Button 
                           size="sm" 
