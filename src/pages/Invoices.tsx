@@ -13,13 +13,33 @@ import {
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { openInvoicePDF, saveInvoicePDF } from "@/services/pdfService";
 
 const Invoices = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   
   const invoicesList = [
-    { id: "INV-001", client: "Acme Corp", amount: 1200, date: "2025-05-15", status: "Paid" },
+    { 
+      id: "INV-001", 
+      client: "Acme Corp", 
+      amount: 1200, 
+      date: "2025-05-15", 
+      status: "Paid",
+      // Sample invoice data for PDF generation
+      invoiceNumber: "INV-001",
+      invoiceDate: "2025-05-15",
+      dueDate: "2025-05-30",
+      clientName: "Acme Corp",
+      clientEmail: "contact@acme.com",
+      clientAddress: "123 Business St\nCity, State 12345",
+      items: [
+        { id: "1", description: "Web Design Services", quantity: 1, price: 1200 }
+      ],
+      notes: "Thank you for your business!",
+      paymentTerms: "Net 15",
+      taxRate: 0
+    },
     { id: "INV-002", client: "Stark Industries", amount: 3450, date: "2025-05-10", status: "Pending" },
     { id: "INV-003", client: "Wayne Enterprises", amount: 2750, date: "2025-05-05", status: "Paid" },
     { id: "INV-004", client: "Oscorp", amount: 1850, date: "2025-04-28", status: "Paid" },
@@ -38,20 +58,38 @@ const Invoices = () => {
   };
   
   const handleDownloadPDF = (invoiceId: string) => {
-    // In a real application, this would fetch the invoice data and generate a PDF
-    toast({
-      title: "PDF Download Started",
-      description: `Invoice ${invoiceId} is being downloaded as PDF.`,
-      variant: "default",
-    });
+    const invoice = invoicesList.find(inv => inv.id === invoiceId);
+    if (invoice) {
+      saveInvoicePDF(invoice);
+      toast({
+        title: "PDF Download Started",
+        description: `Invoice ${invoiceId} is being downloaded as PDF.`,
+        variant: "default",
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: `Invoice ${invoiceId} not found.`,
+        variant: "destructive",
+      });
+    }
   };
   
   const handleViewInvoice = (invoiceId: string) => {
-    // In a real application, this would navigate to the invoice detail page
-    toast({
-      title: "View Invoice",
-      description: `Viewing invoice ${invoiceId}.`,
-    });
+    const invoice = invoicesList.find(inv => inv.id === invoiceId);
+    if (invoice) {
+      openInvoicePDF(invoice);
+      toast({
+        title: "Opening Invoice",
+        description: `Viewing invoice ${invoiceId} in a new tab.`,
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: `Invoice ${invoiceId} not found.`,
+        variant: "destructive",
+      });
+    }
   };
   
   const filteredInvoices = searchTerm 
@@ -120,7 +158,7 @@ const Invoices = () => {
                           variant="outline"
                           onClick={() => handleDownloadPDF(invoice.id)}
                         >
-                          <FileText size={14} />
+                          <Download size={14} />
                         </Button>
                         <Button 
                           size="sm" 
