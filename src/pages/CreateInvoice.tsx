@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import PageLayout from "@/components/PageLayout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,10 +13,12 @@ import {
   FileText, 
   Save, 
   Download,
-  ArrowLeft
+  ArrowLeft,
+  FilePdf
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { saveInvoicePDF, openInvoicePDF } from "@/services/pdfService";
 
 interface InvoiceItem {
   id: string;
@@ -30,6 +32,16 @@ const CreateInvoice = () => {
   const [items, setItems] = useState<InvoiceItem[]>([
     { id: '1', description: '', quantity: 1, price: 0 }
   ]);
+  
+  // Form state
+  const [invoiceNumber, setInvoiceNumber] = useState("INV-001");
+  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
+  const [dueDate, setDueDate] = useState("");
+  const [clientName, setClientName] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
+  const [clientAddress, setClientAddress] = useState("");
+  const [notes, setNotes] = useState("Thank you for your business!");
+  const [paymentTerms, setPaymentTerms] = useState("Payment due within 30 days of invoice date.");
   
   const addItem = () => {
     const newId = String(items.length + 1);
@@ -80,6 +92,63 @@ const CreateInvoice = () => {
       variant: "default",
     });
   };
+  
+  const getInvoiceData = () => {
+    return {
+      invoiceNumber,
+      invoiceDate,
+      dueDate,
+      clientName,
+      clientEmail,
+      clientAddress,
+      items,
+      notes,
+      paymentTerms,
+      taxRate
+    };
+  };
+  
+  const handleGeneratePDF = () => {
+    const invoiceData = getInvoiceData();
+    
+    // Form validation
+    if (!invoiceData.clientName.trim()) {
+      toast({
+        title: "Missing information",
+        description: "Please enter a client name",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    openInvoicePDF(invoiceData);
+    
+    toast({
+      title: "PDF Generated",
+      description: "Your invoice PDF has been generated and opened in a new tab.",
+    });
+  };
+  
+  const handleDownloadPDF = () => {
+    const invoiceData = getInvoiceData();
+    
+    // Form validation
+    if (!invoiceData.clientName.trim()) {
+      toast({
+        title: "Missing information",
+        description: "Please enter a client name",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    saveInvoicePDF(invoiceData);
+    
+    toast({
+      title: "PDF Downloaded",
+      description: "Your invoice PDF has been downloaded.",
+    });
+  };
 
   return (
     <PageLayout>
@@ -89,20 +158,28 @@ const CreateInvoice = () => {
             <h1 className="text-3xl font-bold">Create Invoice</h1>
             <p className="text-muted-foreground">Fill in the details below to create a new invoice</p>
           </div>
-          <div className="flex gap-3 mt-4 md:mt-0 w-full md:w-auto">
-            <Link to="/" className="w-full md:w-auto">
+          <div className="flex flex-wrap gap-3 mt-4 md:mt-0 w-full md:w-auto">
+            <Link to="/" className="w-full sm:w-auto">
               <Button variant="outline" className="flex items-center gap-2 w-full">
                 <ArrowLeft size={16} />
                 Cancel
               </Button>
             </Link>
-            <Button variant="outline" className="flex items-center gap-2 w-full md:w-auto" onClick={handleSaveDraft}>
+            <Button variant="outline" className="flex items-center gap-2 w-full sm:w-auto" onClick={handleSaveDraft}>
               <Save size={16} />
               Save Draft
             </Button>
-            <Button className="btn-primary flex items-center gap-2 w-full md:w-auto" onClick={handleGenerateInvoice}>
+            <Button className="btn-primary flex items-center gap-2 w-full sm:w-auto" onClick={handleDownloadPDF}>
+              <FilePdf size={16} />
+              Download PDF
+            </Button>
+            <Button 
+              className="btn-primary flex items-center gap-2 w-full sm:w-auto bg-purple-600 hover:bg-purple-700" 
+              variant="default" 
+              onClick={handleGeneratePDF}
+            >
               <FileText size={16} />
-              Generate Invoice
+              Preview PDF
             </Button>
           </div>
         </div>
@@ -117,15 +194,29 @@ const CreateInvoice = () => {
               <div className="grid md:grid-cols-3 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="invoiceNumber">Invoice Number</Label>
-                  <Input id="invoiceNumber" defaultValue="INV-001" />
+                  <Input 
+                    id="invoiceNumber" 
+                    value={invoiceNumber} 
+                    onChange={(e) => setInvoiceNumber(e.target.value)} 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="invoiceDate">Invoice Date</Label>
-                  <Input id="invoiceDate" type="date" defaultValue={new Date().toISOString().split('T')[0]} />
+                  <Input 
+                    id="invoiceDate" 
+                    type="date" 
+                    value={invoiceDate}
+                    onChange={(e) => setInvoiceDate(e.target.value)} 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="dueDate">Due Date</Label>
-                  <Input id="dueDate" type="date" />
+                  <Input 
+                    id="dueDate" 
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)} 
+                  />
                 </div>
               </div>
             </CardContent>
@@ -144,17 +235,34 @@ const CreateInvoice = () => {
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="clientName">Client Name</Label>
-                    <Input id="clientName" placeholder="Enter client name" />
+                    <Input 
+                      id="clientName" 
+                      placeholder="Enter client name"
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)} 
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="clientEmail">Client Email</Label>
-                    <Input id="clientEmail" type="email" placeholder="Enter client email" />
+                    <Input 
+                      id="clientEmail" 
+                      type="email" 
+                      placeholder="Enter client email"
+                      value={clientEmail}
+                      onChange={(e) => setClientEmail(e.target.value)} 
+                    />
                   </div>
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="clientAddress">Client Address</Label>
-                  <Textarea id="clientAddress" placeholder="Enter client address" rows={3} />
+                  <Textarea 
+                    id="clientAddress" 
+                    placeholder="Enter client address" 
+                    rows={3}
+                    value={clientAddress}
+                    onChange={(e) => setClientAddress(e.target.value)} 
+                  />
                 </div>
               </div>
             </CardContent>
@@ -259,7 +367,8 @@ const CreateInvoice = () => {
                     id="notes" 
                     placeholder="Additional notes to appear on the invoice" 
                     rows={3}
-                    defaultValue="Thank you for your business!"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)} 
                   />
                 </div>
                 
@@ -269,7 +378,8 @@ const CreateInvoice = () => {
                     id="paymentTerms" 
                     placeholder="Payment terms" 
                     rows={3}
-                    defaultValue="Payment due within 30 days of invoice date."
+                    value={paymentTerms}
+                    onChange={(e) => setPaymentTerms(e.target.value)} 
                   />
                 </div>
               </div>
@@ -277,23 +387,30 @@ const CreateInvoice = () => {
           </Card>
 
           {/* Actions */}
-          <div className="flex flex-col md:flex-row gap-3 justify-end">
-            <Link to="/" className="w-full md:w-auto">
+          <div className="flex flex-wrap gap-3 justify-end">
+            <Link to="/" className="w-full sm:w-auto">
               <Button variant="outline" className="w-full">
                 Cancel
               </Button>
             </Link>
-            <Button variant="outline" className="w-full md:w-auto" onClick={handleSaveDraft}>
+            <Button variant="outline" className="w-full sm:w-auto" onClick={handleSaveDraft}>
               <Save size={16} className="mr-2" />
               Save Draft
             </Button>
-            <Button variant="outline" className="w-full md:w-auto">
+            <Button 
+              variant="outline" 
+              className="w-full sm:w-auto" 
+              onClick={handleDownloadPDF}
+            >
               <Download size={16} className="mr-2" />
-              Preview
+              Download PDF
             </Button>
-            <Button className="btn-primary w-full md:w-auto" onClick={handleGenerateInvoice}>
-              <FileText size={16} className="mr-2" />
-              Generate Invoice
+            <Button 
+              className="btn-primary w-full sm:w-auto" 
+              onClick={handleGeneratePDF}
+            >
+              <FilePdf size={16} className="mr-2" />
+              Preview PDF
             </Button>
           </div>
         </div>

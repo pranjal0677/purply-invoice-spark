@@ -9,11 +9,17 @@ import {
   Search, 
   FileText, 
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
+  FilePdf
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const Invoices = () => {
+  const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState("");
+  
   const invoicesList = [
     { id: "INV-001", client: "Acme Corp", amount: 1200, date: "2025-05-15", status: "Paid" },
     { id: "INV-002", client: "Stark Industries", amount: 3450, date: "2025-05-10", status: "Pending" },
@@ -32,6 +38,31 @@ const Invoices = () => {
       default: return "bg-gray-100 text-gray-800";
     }
   };
+  
+  const handleDownloadPDF = (invoiceId: string) => {
+    // In a real application, this would fetch the invoice data and generate a PDF
+    toast({
+      title: "PDF Download Started",
+      description: `Invoice ${invoiceId} is being downloaded as PDF.`,
+      variant: "default",
+    });
+  };
+  
+  const handleViewInvoice = (invoiceId: string) => {
+    // In a real application, this would navigate to the invoice detail page
+    toast({
+      title: "View Invoice",
+      description: `Viewing invoice ${invoiceId}.`,
+    });
+  };
+  
+  const filteredInvoices = searchTerm 
+    ? invoicesList.filter(
+        invoice => 
+          invoice.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
+          invoice.client.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : invoicesList;
 
   return (
     <PageLayout title="Invoices">
@@ -42,6 +73,8 @@ const Invoices = () => {
             <Input 
               placeholder="Search invoices..." 
               className="pl-8" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <Link to="/create-invoice">
@@ -66,7 +99,7 @@ const Invoices = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {invoicesList.map((invoice) => (
+                {filteredInvoices.map((invoice) => (
                   <tr key={invoice.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
@@ -84,10 +117,18 @@ const Invoices = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <div className="flex justify-end gap-2">
-                        <Button size="sm" variant="outline">
-                          <Download size={14} />
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleDownloadPDF(invoice.id)}
+                        >
+                          <FilePdf size={14} />
                         </Button>
-                        <Button size="sm" variant="outline">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleViewInvoice(invoice.id)}
+                        >
                           View
                         </Button>
                       </div>
