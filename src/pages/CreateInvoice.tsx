@@ -1,10 +1,12 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import PageLayout from "@/components/PageLayout";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   User, 
   Plus, 
@@ -12,18 +14,17 @@ import {
   FileText, 
   Save, 
   Download,
-  ArrowLeft
+  ArrowLeft,
+  Building,
+  CreditCard,
+  QrCode,
+  IndianRupee
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { saveInvoicePDF, openInvoicePDF } from "@/services/pdfService";
-
-interface InvoiceItem {
-  id: string;
-  description: string;
-  quantity: number;
-  price: number;
-}
+import { InvoiceData, InvoiceItem, CompanyDetails, BankDetails } from "@/types/invoice";
+import { Switch } from "@/components/ui/switch";
 
 const CreateInvoice = () => {
   const { toast } = useToast();
@@ -40,6 +41,100 @@ const CreateInvoice = () => {
   const [clientAddress, setClientAddress] = useState("");
   const [notes, setNotes] = useState("Thank you for your business!");
   const [paymentTerms, setPaymentTerms] = useState("Payment due within 30 days of invoice date.");
+  const [status, setStatus] = useState<"Paid" | "Pending" | "Overdue">("Pending");
+  const [currency, setCurrency] = useState("INR"); // Default to Indian Rupees
+  const [showQRCode, setShowQRCode] = useState(true);
+  
+  // Company details
+  const [companyDetails, setCompanyDetails] = useState<CompanyDetails>({
+    name: "Your Company Name",
+    email: "company@example.com",
+    phone: "+91 9876543210",
+    address: "Company Address\nCity, State, PIN",
+    taxId: "GSTIN: 12ABCDE1234F1Z5",
+    logo: ""
+  });
+  
+  // Bank details
+  const [bankDetails, setBankDetails] = useState<BankDetails>({
+    accountName: "Company Account Name",
+    accountNumber: "1234567890",
+    bankName: "Bank Name",
+    ifscCode: "BANK0001234",
+    upiId: "company@upi"
+  });
+  
+  // Logo file handling
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string>("");
+  
+  // Load saved settings on component mount
+  useEffect(() => {
+    // Load company details from localStorage if available
+    const savedCompanyDetails = localStorage.getItem('companyDetails');
+    if (savedCompanyDetails) {
+      try {
+        const parsedDetails = JSON.parse(savedCompanyDetails);
+        setCompanyDetails(parsedDetails);
+      } catch (error) {
+        console.error("Failed to parse company details:", error);
+      }
+    }
+    
+    // Load bank details from localStorage if available
+    const savedBankDetails = localStorage.getItem('bankDetails');
+    if (savedBankDetails) {
+      try {
+        const parsedDetails = JSON.parse(savedBankDetails);
+        setBankDetails(parsedDetails);
+      } catch (error) {
+        console.error("Failed to parse bank details:", error);
+      }
+    }
+    
+    // Load other invoice settings
+    const savedInvoicePrefix = localStorage.getItem('invoicePrefix');
+    if (savedInvoicePrefix) {
+      setInvoiceNumber(savedInvoicePrefix + "001");
+    }
+    
+    const savedCurrency = localStorage.getItem('defaultCurrency');
+    if (savedCurrency) {
+      setCurrency(savedCurrency);
+    }
+    
+    const savedNotes = localStorage.getItem('defaultInvoiceNotes');
+    if (savedNotes) {
+      setNotes(savedNotes);
+    }
+    
+    const savedPaymentTerms = localStorage.getItem('defaultPaymentTerms');
+    if (savedPaymentTerms) {
+      setPaymentTerms(savedPaymentTerms);
+    }
+    
+    const savedLogo = localStorage.getItem('companyLogo');
+    if (savedLogo) {
+      setCompanyDetails(prev => ({ ...prev, logo: savedLogo }));
+      setLogoPreview(savedLogo);
+    }
+  }, []);
+  
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setLogoFile(file);
+      
+      // Create a preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setLogoPreview(result);
+        setCompanyDetails(prev => ({ ...prev, logo: result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
   
   const addItem = () => {
     const newId = String(items.length + 1);
@@ -72,9 +167,19 @@ const CreateInvoice = () => {
   };
   
   const subtotal = calculateSubtotal();
-  const taxRate = 10; // 10%
+  const taxRate = 18; // Default to 18% (GST in India)
   const tax = subtotal * (taxRate / 100);
   const total = subtotal + tax;
+  
+  const getCurrencySymbol = () => {
+    switch (currency) {
+      case 'INR': return '₹';
+      case 'USD': return '$';
+      case 'EUR': return '€';
+      case 'GBP': return '£';
+      default: return currency;
+    }
+  };
   
   const handleSaveDraft = () => {
     toast({
@@ -83,15 +188,7 @@ const CreateInvoice = () => {
     });
   };
   
-  const handleGenerateInvoice = () => {
-    toast({
-      title: "Invoice generated",
-      description: "Your invoice has been generated successfully.",
-      variant: "default",
-    });
-  };
-  
-  const getInvoiceData = () => {
+  const getInvoiceData = (): InvoiceData => {
     return {
       invoiceNumber,
       invoiceDate,
@@ -102,7 +199,12 @@ const CreateInvoice = () => {
       items,
       notes,
       paymentTerms,
-      taxRate
+      taxRate,
+      status,
+      currency,
+      companyDetails,
+      bankDetails,
+      showQRCode
     };
   };
   
@@ -186,10 +288,13 @@ const CreateInvoice = () => {
           {/* Invoice Info */}
           <Card className="card-shadow">
             <CardHeader className="pb-2">
-              <CardTitle>Invoice Information</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                Invoice Information
+              </CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
-              <div className="grid md:grid-cols-3 gap-6">
+              <div className="grid md:grid-cols-4 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="invoiceNumber">Invoice Number</Label>
                   <Input 
@@ -214,6 +319,186 @@ const CreateInvoice = () => {
                     type="date"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select value={status} onValueChange={(value) => setStatus(value as "Paid" | "Pending" | "Overdue")}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Paid">Paid</SelectItem>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="Overdue">Overdue</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-6 mt-6">
+                <div className="space-y-2">
+                  <Label htmlFor="currency">Currency</Label>
+                  <Select value={currency} onValueChange={setCurrency}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="INR">₹ (Indian Rupee)</SelectItem>
+                      <SelectItem value="USD">$ (US Dollar)</SelectItem>
+                      <SelectItem value="EUR">€ (Euro)</SelectItem>
+                      <SelectItem value="GBP">£ (British Pound)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center space-x-2 mt-8">
+                  <Label htmlFor="showQRCode">
+                    Include UPI QR code for payment
+                  </Label>
+                  <Switch 
+                    id="showQRCode"
+                    checked={showQRCode}
+                    onCheckedChange={setShowQRCode}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Company Info */}
+          <Card className="card-shadow">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2">
+                <Building className="h-5 w-5 text-primary" />
+                Your Company Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <div className="grid gap-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="companyName">Company Name</Label>
+                    <Input
+                      id="companyName"
+                      value={companyDetails.name}
+                      onChange={(e) => setCompanyDetails({...companyDetails, name: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="companyEmail">Email</Label>
+                    <Input
+                      id="companyEmail"
+                      type="email"
+                      value={companyDetails.email}
+                      onChange={(e) => setCompanyDetails({...companyDetails, email: e.target.value})}
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="companyPhone">Phone Number</Label>
+                    <Input
+                      id="companyPhone"
+                      value={companyDetails.phone}
+                      onChange={(e) => setCompanyDetails({...companyDetails, phone: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="taxId">GST/Tax ID</Label>
+                    <Input
+                      id="taxId"
+                      value={companyDetails.taxId}
+                      onChange={(e) => setCompanyDetails({...companyDetails, taxId: e.target.value})}
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="companyAddress">Company Address</Label>
+                  <Textarea
+                    id="companyAddress"
+                    rows={3}
+                    value={companyDetails.address}
+                    onChange={(e) => setCompanyDetails({...companyDetails, address: e.target.value})}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="logo">Company Logo</Label>
+                  <div className="flex items-center gap-4">
+                    <Input
+                      id="logo"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoChange}
+                      className="w-full max-w-sm"
+                    />
+                    {logoPreview && (
+                      <div className="w-20 h-20 border rounded flex items-center justify-center p-1">
+                        <img src={logoPreview} alt="Logo preview" className="max-w-full max-h-full object-contain" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Bank Details */}
+          <Card className="card-shadow">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-primary" />
+                Bank Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <div className="grid gap-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="accountName">Account Name</Label>
+                    <Input
+                      id="accountName"
+                      value={bankDetails.accountName}
+                      onChange={(e) => setBankDetails({...bankDetails, accountName: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="accountNumber">Account Number</Label>
+                    <Input
+                      id="accountNumber"
+                      value={bankDetails.accountNumber}
+                      onChange={(e) => setBankDetails({...bankDetails, accountNumber: e.target.value})}
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="bankName">Bank Name</Label>
+                    <Input
+                      id="bankName"
+                      value={bankDetails.bankName}
+                      onChange={(e) => setBankDetails({...bankDetails, bankName: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ifscCode">IFSC Code</Label>
+                    <Input
+                      id="ifscCode"
+                      value={bankDetails.ifscCode}
+                      onChange={(e) => setBankDetails({...bankDetails, ifscCode: e.target.value})}
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="upiId">UPI ID (for QR code payment)</Label>
+                  <Input
+                    id="upiId"
+                    value={bankDetails.upiId}
+                    onChange={(e) => setBankDetails({...bankDetails, upiId: e.target.value})}
                   />
                 </div>
               </div>
@@ -276,7 +561,7 @@ const CreateInvoice = () => {
                 <div className="grid grid-cols-12 gap-4 font-medium text-sm text-muted-foreground pb-2">
                   <div className="col-span-6 md:col-span-5">Description</div>
                   <div className="col-span-2">Quantity</div>
-                  <div className="col-span-3 md:col-span-3">Price ($)</div>
+                  <div className="col-span-3 md:col-span-3">Price ({getCurrencySymbol()})</div>
                   <div className="col-span-1 md:col-span-1 text-right">Total</div>
                   <div className="col-span-1 md:col-span-1"></div>
                 </div>
@@ -308,7 +593,7 @@ const CreateInvoice = () => {
                       />
                     </div>
                     <div className="col-span-1 md:col-span-1 text-right font-medium">
-                      ${(item.quantity * item.price).toFixed(2)}
+                      {getCurrencySymbol()}{(item.quantity * item.price).toFixed(2)}
                     </div>
                     <div className="col-span-1 md:col-span-1 flex justify-end">
                       <Button 
@@ -337,15 +622,15 @@ const CreateInvoice = () => {
                 <div className="flex flex-col items-end space-y-2 pt-4 border-t border-border">
                   <div className="flex justify-between w-full md:w-1/3 text-sm">
                     <span className="text-muted-foreground">Subtotal:</span>
-                    <span className="font-medium">${subtotal.toFixed(2)}</span>
+                    <span className="font-medium">{getCurrencySymbol()}{subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between w-full md:w-1/3 text-sm">
                     <span className="text-muted-foreground">Tax ({taxRate}%):</span>
-                    <span className="font-medium">${tax.toFixed(2)}</span>
+                    <span className="font-medium">{getCurrencySymbol()}{tax.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between w-full md:w-1/3 text-lg font-bold pt-2 border-t border-border">
                     <span>Total:</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>{getCurrencySymbol()}{total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>

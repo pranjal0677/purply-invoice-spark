@@ -9,7 +9,8 @@ import {
   Search,
   User,
   Mail,
-  Phone
+  Phone,
+  UserPlus
 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -43,15 +44,15 @@ const Clients = () => {
     email: "",
     phone: ""
   });
-
-  const clientsList: Client[] = [
+  
+  const [clientsList, setClientsList] = useState<Client[]>([
     { id: 1, name: "Acme Corporation", email: "contact@acme.com", phone: "+1 (555) 123-4567", invoices: 4, total: 3500 },
     { id: 2, name: "Stark Industries", email: "info@stark.com", phone: "+1 (555) 234-5678", invoices: 3, total: 4250 },
     { id: 3, name: "Wayne Enterprises", email: "contact@wayne.com", phone: "+1 (555) 345-6789", invoices: 6, total: 7800 },
     { id: 4, name: "Oscorp Industries", email: "info@oscorp.com", phone: "+1 (555) 456-7890", invoices: 2, total: 2300 },
     { id: 5, name: "LexCorp", email: "contact@lexcorp.com", phone: "+1 (555) 567-8901", invoices: 5, total: 6100 },
     { id: 6, name: "Queen Industries", email: "info@queen.com", phone: "+1 (555) 678-9012", invoices: 1, total: 1800 },
-  ];
+  ]);
 
   const filteredClients = searchTerm 
     ? clientsList.filter(client => 
@@ -61,7 +62,28 @@ const Clients = () => {
     : clientsList;
 
   const handleAddClient = () => {
-    // In a real app, this would call an API to create a client
+    if (!newClient.name.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Client name is required.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Create a new client with an ID
+    const newId = clientsList.length > 0 ? Math.max(...clientsList.map(c => c.id)) + 1 : 1;
+    const clientToAdd: Client = {
+      id: newId,
+      name: newClient.name,
+      email: newClient.email,
+      phone: newClient.phone,
+      invoices: 0,
+      total: 0
+    };
+    
+    setClientsList([...clientsList, clientToAdd]);
+    
     toast({
       title: "Client Added",
       description: `${newClient.name} has been added to your clients.`,
@@ -71,12 +93,25 @@ const Clients = () => {
   };
 
   const handleEditClient = (client: Client) => {
-    setEditingClient(client);
+    setEditingClient({...client});
   };
 
   const handleSaveEdit = () => {
-    // In a real app, this would call an API to update the client
     if (editingClient) {
+      if (!editingClient.name.trim()) {
+        toast({
+          title: "Missing Information",
+          description: "Client name is required.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Update the client in the list
+      setClientsList(clientsList.map(client => 
+        client.id === editingClient.id ? editingClient : client
+      ));
+      
       toast({
         title: "Client Updated",
         description: `${editingClient.name} has been updated.`,
@@ -86,11 +121,19 @@ const Clients = () => {
   };
 
   const handleViewClient = (clientId: number) => {
-    // In a real app, this would navigate to a client details page
-    toast({
-      title: "Viewing Client",
-      description: `Now viewing client #${clientId} details.`,
-    });
+    const client = clientsList.find(c => c.id === clientId);
+    if (client) {
+      toast({
+        title: "Viewing Client",
+        description: `Now viewing ${client.name} details.`,
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: `Client #${clientId} not found.`,
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -109,7 +152,7 @@ const Clients = () => {
           <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
             <DialogTrigger asChild>
               <Button className="btn-primary flex items-center gap-2 w-full md:w-auto">
-                <Plus size={16} />
+                <UserPlus size={16} />
                 Add Client
               </Button>
             </DialogTrigger>
@@ -246,7 +289,7 @@ const Clients = () => {
                   </div>
                   <div className="text-right">
                     <span className="text-muted-foreground">Total Amount</span>
-                    <p className="font-medium">${client.total.toLocaleString()}</p>
+                    <p className="font-medium">₹{client.total.toLocaleString()}</p>
                   </div>
                 </div>
                 
