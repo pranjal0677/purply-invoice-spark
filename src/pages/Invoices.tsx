@@ -1,3 +1,4 @@
+
 import PageLayout from "@/components/PageLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { openInvoicePDF, saveInvoicePDF } from "@/services/pdfService";
+import { InvoiceData } from "@/types/invoice";
 
 const Invoices = () => {
   const { toast } = useToast();
@@ -40,12 +42,120 @@ const Invoices = () => {
       paymentTerms: "Net 15",
       taxRate: 0
     },
-    { id: "INV-002", client: "Stark Industries", amount: 3450, date: "2025-05-10", status: "Pending" },
-    { id: "INV-003", client: "Wayne Enterprises", amount: 2750, date: "2025-05-05", status: "Paid" },
-    { id: "INV-004", client: "Oscorp", amount: 1850, date: "2025-04-28", status: "Paid" },
-    { id: "INV-005", client: "LexCorp", amount: 4200, date: "2025-04-22", status: "Overdue" },
-    { id: "INV-006", client: "Queen Industries", amount: 2100, date: "2025-04-15", status: "Pending" },
-    { id: "INV-007", client: "Kord Industries", amount: 1350, date: "2025-04-10", status: "Paid" },
+    { 
+      id: "INV-002", 
+      client: "Stark Industries", 
+      amount: 3450, 
+      date: "2025-05-10", 
+      status: "Pending",
+      invoiceNumber: "INV-002",
+      invoiceDate: "2025-05-10",
+      dueDate: "2025-05-25",
+      clientName: "Stark Industries",
+      clientEmail: "accounts@stark.com",
+      clientAddress: "200 Park Avenue\nNew York, NY 10166",
+      items: [
+        { id: "1", description: "Technical Consultation", quantity: 3, price: 1150 }
+      ],
+      notes: "Please pay within terms",
+      paymentTerms: "Net 15",
+      taxRate: 0
+    },
+    { 
+      id: "INV-003", 
+      client: "Wayne Enterprises", 
+      amount: 2750, 
+      date: "2025-05-05", 
+      status: "Paid",
+      invoiceNumber: "INV-003",
+      invoiceDate: "2025-05-05",
+      dueDate: "2025-05-20",
+      clientName: "Wayne Enterprises",
+      clientEmail: "billing@wayne.com",
+      clientAddress: "1007 Mountain Drive\nGotham, NY 10286",
+      items: [
+        { id: "1", description: "Security Analysis", quantity: 1, price: 2750 }
+      ],
+      notes: "Thank you for your business!",
+      paymentTerms: "Net 15",
+      taxRate: 0
+    },
+    { 
+      id: "INV-004", 
+      client: "Oscorp", 
+      amount: 1850, 
+      date: "2025-04-28", 
+      status: "Paid",
+      invoiceNumber: "INV-004",
+      invoiceDate: "2025-04-28",
+      dueDate: "2025-05-13",
+      clientName: "Oscorp",
+      clientEmail: "finance@oscorp.com",
+      clientAddress: "Northwest Corner\nNew York, NY 10023",
+      items: [
+        { id: "1", description: "Research Equipment", quantity: 1, price: 1850 }
+      ],
+      notes: "Thank you for your business!",
+      paymentTerms: "Net 15",
+      taxRate: 0
+    },
+    { 
+      id: "INV-005", 
+      client: "LexCorp", 
+      amount: 4200, 
+      date: "2025-04-22", 
+      status: "Overdue",
+      invoiceNumber: "INV-005",
+      invoiceDate: "2025-04-22",
+      dueDate: "2025-05-07",
+      clientName: "LexCorp",
+      clientEmail: "payments@lexcorp.com",
+      clientAddress: "1000 Main Street\nMetropolis, DE 19901",
+      items: [
+        { id: "1", description: "Tech Consulting", quantity: 2, price: 2100 }
+      ],
+      notes: "Payment overdue - please remit immediately",
+      paymentTerms: "Net 15",
+      taxRate: 0
+    },
+    { 
+      id: "INV-006", 
+      client: "Queen Industries", 
+      amount: 2100, 
+      date: "2025-04-15", 
+      status: "Pending",
+      invoiceNumber: "INV-006",
+      invoiceDate: "2025-04-15",
+      dueDate: "2025-04-30",
+      clientName: "Queen Industries",
+      clientEmail: "ar@queen.com",
+      clientAddress: "123 Star City\nSeattle, WA 98101",
+      items: [
+        { id: "1", description: "Equipment Rental", quantity: 1, price: 2100 }
+      ],
+      notes: "Please pay within terms",
+      paymentTerms: "Net 15",
+      taxRate: 0
+    },
+    { 
+      id: "INV-007", 
+      client: "Kord Industries", 
+      amount: 1350, 
+      date: "2025-04-10", 
+      status: "Paid",
+      invoiceNumber: "INV-007",
+      invoiceDate: "2025-04-10",
+      dueDate: "2025-04-25",
+      clientName: "Kord Industries",
+      clientEmail: "invoices@kord.com",
+      clientAddress: "350 5th Avenue\nChicago, IL 60611",
+      items: [
+        { id: "1", description: "Software License", quantity: 3, price: 450 }
+      ],
+      notes: "Thank you for your business!",
+      paymentTerms: "Net 15",
+      taxRate: 0
+    },
   ];
 
   const getStatusColor = (status: string) => {
@@ -60,7 +170,7 @@ const Invoices = () => {
   const handleDownloadPDF = (invoiceId: string) => {
     const invoice = invoicesList.find(inv => inv.id === invoiceId);
     if (invoice) {
-      saveInvoicePDF(invoice);
+      saveInvoicePDF(invoice as InvoiceData);
       toast({
         title: "PDF Download Started",
         description: `Invoice ${invoiceId} is being downloaded as PDF.`,
@@ -78,7 +188,7 @@ const Invoices = () => {
   const handleViewInvoice = (invoiceId: string) => {
     const invoice = invoicesList.find(inv => inv.id === invoiceId);
     if (invoice) {
-      openInvoicePDF(invoice);
+      openInvoicePDF(invoice as InvoiceData);
       toast({
         title: "Opening Invoice",
         description: `Viewing invoice ${invoiceId} in a new tab.`,

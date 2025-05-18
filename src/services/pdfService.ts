@@ -1,26 +1,7 @@
 
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-
-interface InvoiceItem {
-  id: string;
-  description: string;
-  quantity: number;
-  price: number;
-}
-
-interface InvoiceData {
-  invoiceNumber: string;
-  invoiceDate: string;
-  dueDate: string;
-  clientName: string;
-  clientEmail: string;
-  clientAddress: string;
-  items: InvoiceItem[];
-  notes: string;
-  paymentTerms: string;
-  taxRate: number;
-}
+import { InvoiceData, InvoiceItem } from '@/types/invoice';
 
 export const generateInvoicePDF = (data: InvoiceData) => {
   const doc = new jsPDF();
